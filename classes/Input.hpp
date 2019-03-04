@@ -3,9 +3,10 @@
 
 class Input {
 	private:
-		std::ifstream inFile;
-		int currentData = 0;
-		int maxData;
+		std::ifstream dataTrainFile;
+		std::ifstream labelTrainFile;
+		std::ifstream dataTestFile;
+		std::ifstream labelTestFile;
 	
 	public:
 		int inputShape, outputShape;
@@ -13,9 +14,14 @@ class Input {
 			this->Init();
 		}
 		~Input(){
-			this->inFile.close();
+			this->dataTrainFile.close();
+			this->labelTrainFile.close();
+			this->dataTestFile.close();
+			this->labelTestFile.close();
 		}
 		auto Init() -> void;
-		auto NextData() -> std::vector<float>;
-		auto NextTarget() -> std::vector<float>;
+		auto NextTrainData() -> std::vector<float>;
+		auto NextTrainTarget() -> std::vector<float>;
+		auto NextTestData() -> std::vector<float>;
+		auto NextTestTarget() -> std::vector<float>;
 };

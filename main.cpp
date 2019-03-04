@@ -2,69 +2,84 @@
 #include <vector>
 #include <time.h>
 #include <random>
+#include <iomanip>
 #include "classes/Input.hpp"
 #include "classes/NeuralNet.hpp"
 
 auto Input::Init() -> void {
-	this->inFile.open("datasets/iris/data");
-	this->maxData = 150;
-	this->inputShape = 4;
-	this->outputShape = 3;
-	// This is where the first few lines of input should be read for parameters
+	this->dataTrainFile.open("datasets/mnist/train/data");
+	this->labelTrainFile.open("datasets/mnist/train/labels");
+	this->dataTestFile.open("datasets/mnist/test/data");
+	this->labelTestFile.open("datasets/mnist/test/labels");
+
+	this->inputShape = 28 * 28;
+	this->outputShape = 10;
+
+	this->dataTrainFile.seekg(16, this->dataTrainFile.beg);
+	this->labelTrainFile.seekg(8, this->labelTrainFile.beg);
+	this->dataTestFile.seekg(16, this->dataTestFile.beg);
+	this->labelTestFile.seekg(8, this->labelTestFile.beg);
 }
 
-auto Input::NextData() -> std::vector<float> {
-	if (this->currentData < this->maxData){
-		std::vector<float> temp(4);
-		for (int i = 0; i < 4; i++){
-			this->inFile >> temp[i];
-		}
-		return temp;
-	} else {
-		throw "Out of Data Error";
+auto Input::NextTrainData() -> std::vector<float> {
+	std::vector<float> temp(this->inputShape);
+	char tempChar;
+	for (int i = 0; i < this->inputShape; i++){
+		this->dataTrainFile.read(&tempChar, 1);
+		temp[i] = float((unsigned char)tempChar)/255.0;
 	}
+	return temp;
 }
 
-auto Input::NextTarget() -> std::vector<float> {
-	if (this->currentData < this->maxData){
-		int temp;
-		inFile >> temp;
-		if (temp == 0){
-			return {1.0, 0.0, 0.0};
-		} else if (temp == 1){
-			return {0.0, 1.0, 0.0};
-		} else {
-			return {0.0, 0.0, 1.0};
-		}
-	} else {
-		throw "Out of Data Error";
+auto Input::NextTrainTarget() -> std::vector<float> {
+	char temp;
+	this->labelTrainFile.read(&temp, 1);
+	std::vector<float> targets(10, 0.0);
+	targets[temp] = 1.0;
+	return targets;
+}
+
+auto Input::NextTestData() -> std::vector<float> {
+	std::vector<float> temp(this->inputShape);
+	char tempChar;
+	for (int i = 0; i < this->inputShape; i++){
+		this->dataTestFile.read(&tempChar, 1);
+		temp[i] = float((unsigned char)tempChar)/255.0;
 	}
+	return temp;
+}
+
+auto Input::NextTestTarget() -> std::vector<float> {
+	char temp;
+	this->labelTestFile.read(&temp, 1);
+	std::vector<float> targets(10, 0.0);
+	targets[temp] = 1.0;
+	return targets;
 }
 
 auto main() -> int {
 	srand(time(0));
 
 	Input input;
-	NeuralNet net({ input.inputShape, 100, input.outputShape }, 0.1);
+	NeuralNet net({ input.inputShape, 784, input.outputShape }, 0.1);
 
-	for (int i = 0; i < 149; i++){
-		net.BackPropagate(input.NextData(), input.NextTarget());
+	for (int i = 0; i < 60000; i++){
+		net.BackPropagate(input.NextTrainData(), input.NextTrainTarget());
 	}
 
-	net.Fire(input.NextData());
+	int correct = 0;
+	for (int i = 0; i < 10000; i++){
+		net.Fire(input.NextTestData());
 
-	auto outputs = net.GetOutput();
-	auto targets = input.NextTarget();
+		auto outputs = net.GetOutput();
+		auto targets = input.NextTestTarget();
 
-	std::cout << "Outputs = { ";
-	for (auto output : outputs){
-		std::cout << output << " ";
+		auto outputClass = std::distance(outputs.begin(), std::max_element(outputs.begin(), outputs.end()));
+		auto targetClass = std::distance(targets.begin(), std::max_element(targets.begin(), targets.end()));
+		if (outputClass == targetClass) correct++;
 	}
-	std::cout << "}" << std::endl << "Targets = { ";
-	for (auto target : targets){
-		std::cout << target << " ";
-	}
-	std::cout << "}" << std::endl;
+
+	std::cout << "Accuracy: " << ((float)correct / 10000.0) * 100.0 << "%" << std::endl;
 
 	return 0;
 }
