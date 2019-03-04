@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <math.h>
 #include "NeuralNet.hpp"
 //#include "Layer.cpp"
 
@@ -33,4 +34,70 @@ auto NeuralNet::Fire(std::vector<float> input) -> void {
 
 auto NeuralNet::GetOutput() -> std::vector<float> {
 	return this->layers[this->layers.size() - 1].GetValues();
+}
+
+inline auto NeuralNet::SigmoidDerivative(float val) -> float {
+	return 0.5 / ((1.0f + fabs(val)) * (1.0f + fabs(val)));
+}
+
+auto NeuralNet::BackPropagate(std::vector<float> input, std::vector<float> target) -> void {
+	this->Fire(input);
+
+	this->BackPropagateDeltas(target);
+	auto weightDeltas = this->BackPropagateWeights();
+
+	for (int i = 1; i < this->layers.size(); i++){
+		for (int j = 0; j < this->layers[i].neurons.size(); j++){
+			for (int k = 0; k < this->layers[i].neurons[j].weights.size(); k++){
+				this->layers[i].neurons[j].weights[k] += weightDeltas[i][j][k];
+			}
+		}
+	}
+}
+
+auto NeuralNet::BackPropagateDeltas(std::vector<float> target) -> void {
+	for (int i = this->layers.size() - 1; i > 0; i--){
+		for (int j = 0; j < this->layers[i].neurons.size(); j++){
+			if (i == this->layers.size() - 1){
+				this->layers[i].neurons[j].delta = 2*(this->layers[i].neurons[j].value - target[j]);
+			} else {
+				this->layers[i].neurons[j].delta = 0;
+
+				for (int k = 0; k < this->layers[i + 1].neurons.size(); k++){
+					this->layers[i].neurons[j].delta += this->layers[i + 1].neurons[k].delta * this->SigmoidDerivative(this->layers[i + 1].neurons[k].valuePreSigmoid) * this->layers[i + 1].neurons[k].weights[j];
+				}
+			}
+		}
+	}
+}
+
+auto NeuralNet::BackPropagateWeights() -> std::vector<std::vector<std::vector<float>>> {
+	std::vector<std::vector<std::vector<float>>> weightDeltas(this->layers.size());
+
+	for (int i = 1; i < this->layers.size(); ++i){
+		weightDeltas[i] = std::vector<std::vector<float>>(this->layers[i].neurons.size());
+		for (int j = 0; j < this->layers[i].neurons.size(); j++){
+			weightDeltas[i][j] = std::vector<float>(this->layers[i-1].neurons.size());
+		}
+	}
+
+	for (int i = this->layers.size() - 1; i > 0; i--){
+		for (int j = 0; j < this->layers[i].neurons.size(); j++){
+			for (int k = 0; k < this->layers[i].neurons[j].weights.size(); k++){
+				weightDeltas[i][j][k] = -this->learningRate*this->layers[i].neurons[j].delta*this->SigmoidDerivative(this->layers[i].neurons[j].valuePreSigmoid)*this->layers[i - 1].neurons[k].value;
+			}
+		}
+	}
+
+	return weightDeltas;
+}
+
+auto NeuralNet::GetAccuracy(std::vector<float> target) -> float {
+	float totalError = 0.0f;
+
+	for (int i = 0; i < target.size(); i++){
+		totalError += 0.5*(target[i] - this->layers[this->layers.size() - 1].neurons[i].value)*(target[i] - this->layers[this->layers.size() - 1].neurons[i].value);
+	}
+
+	return totalError;
 }

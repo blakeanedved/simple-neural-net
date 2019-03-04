@@ -42,6 +42,7 @@ auto Neuron::Fire(std::vector<float> &inputValues) -> void {
 
 	// if using bias
 	// this->value += this->bias;
+	this->valuePreSigmoid = this->value;
 	this->value = this->Sigmoid(this->value);
 }
 

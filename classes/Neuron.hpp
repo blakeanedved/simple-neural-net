@@ -12,6 +12,8 @@ class Neuron {
 
 		float value; /**< This neurons ouput after being fired */
 		float bias; /**< The extra value added during the firing of a neuron */
+		float delta; /**< The delta for this neuron, used by NeuralNet.BackPropagate() */
+		float valuePreSigmoid; /**< The value for this neuron before sigmoid function is applied, only used for speed concerns */
 
 		/** Constructor with only the number of input neurons
 		 *

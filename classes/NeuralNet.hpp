@@ -43,4 +43,46 @@ class NeuralNet {
 		  This function just grabs the values from the last layer of the network
 		 */
 		auto GetOutput() -> std::vector<float>;
+
+		/** Calculate the derivative of the sigmoid function for a value
+		 *
+		 * \param val the value to calculate
+		 * \ret the calculated value
+		 *
+		  Simple fast sigmoid derivative function for use of backpropagation
+		 */
+		inline auto SigmoidDerivative(float val) -> float;
+
+		/** Run the back propagation algorithm, given input and output values
+		 *
+		 * \param input the input data values
+		 * \param target corresponding output data for the input data
+		 *
+		  Apply the full backpropagation algorithm for a given input and output, which will change the values with no return value
+		 */
+		auto BackPropagate(std::vector<float> input, std::vector<float> target) -> void;
+
+		/** Apply a simple back propagation algorithm to the deltas of each neurons of each layer
+		 *
+		 * \param target the target output values for the input data
+		 *
+		  This function takes in the target values for a piece of data, then calculates the deltas for each neuron in each layer
+		 */
+		auto BackPropagateDeltas(std::vector<float> target) -> void;
+
+		/** Calculate the adjustment each weight should take
+		 *
+		 * \ret a 3d vector containing the weight deltas
+		 *
+		  Calculate how much each weight should be adjusted by factoring its delta and the learning rate of the network, has to return the values instead of setting them to prevent bias from getting an improper adjustment
+		 */
+		auto BackPropagateWeights() -> std::vector<std::vector<std::vector<float>>>;
+
+		/** Get the accuracy for the network for the last data
+		 *
+		 * \param target the data with which to determine accuracy with
+		 *
+		  Calculate the accuracy of the network for given data, using a squared error function
+		 */
+		auto GetAccuracy(std::vector<float> target) -> float;
 };
