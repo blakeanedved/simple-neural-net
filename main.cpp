@@ -45,15 +45,15 @@ auto main() -> int {
 	auto outputs = net.GetOutput();
 	auto targets = getNextTarget();
 
-	std::cout << "Outputs = {";
+	std::cout << "Outputs = { ";
 	for (auto output : outputs){
-		std::cout << "}" << output << " ";
+		std::cout << output << " ";
 	}
-	std::cout << std::endl << "Targets = {";
+	std::cout << "}" << std::endl << "Targets = { ";
 	for (auto target : targets){
-		std::cout << "}" << target << " ";
+		std::cout << target << " ";
 	}
-	std::cout << std::endl;
+	std::cout << "}" << std::endl;
 
 	inFile.close();
 
